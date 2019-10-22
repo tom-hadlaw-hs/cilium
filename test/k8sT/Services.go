@@ -211,7 +211,7 @@ var _ = Describe("K8sServicesTest", func() {
 			testHTTPRequest(testDSClient, url)
 		})
 
-		testNodePort := func(bpfNodePort bool) {
+		testNodePort := func(bpfNodePort, fromRemoteHost bool) {
 			var data v1.Service
 			getURL := func(host string, port int32) string {
 				return fmt.Sprintf("http://%s",
@@ -224,6 +224,15 @@ var _ = Describe("K8sServicesTest", func() {
 					ExpectWithOffset(1, err).To(BeNil(), "Cannot run curl in host netns")
 					ExpectWithOffset(1, res).Should(helpers.CMDSuccess(),
 						"k8s1 host can not connect to service %q", url)
+				}
+			}
+			doRequestsFromRemoteHost := func(url string, count int) {
+				By("Making %d HTTP requests from remote host to %q", count, url)
+				for i := 1; i <= count; i++ {
+					res := kubectl.Executor.Exec(helpers.CurlFail(url))
+					ExpectWithOffset(1, res).Should(helpers.CMDSuccess(),
+						"remote host can not connect to service %q", url)
+					// TODO(brb) check reply (reply with source IP of the orig request)
 				}
 			}
 
@@ -240,11 +249,19 @@ var _ = Describe("K8sServicesTest", func() {
 			url = getURL("127.0.0.1", data.Spec.Ports[0].NodePort)
 			doRequests(url, count)
 
-			url = getURL(helpers.K8s1Ip, data.Spec.Ports[0].NodePort)
-			doRequests(url, count)
+			if fromRemoteHost {
+				url = getURL(helpers.K8s1Ip, data.Spec.Ports[0].NodePort)
+				doRequestsFromRemoteHost(url, count)
 
-			url = getURL(helpers.K8s2Ip, data.Spec.Ports[0].NodePort)
-			doRequests(url, count)
+				url = getURL(helpers.K8s2Ip, data.Spec.Ports[0].NodePort)
+				doRequestsFromRemoteHost(url, count)
+			} else {
+				url = getURL(helpers.K8s1Ip, data.Spec.Ports[0].NodePort)
+				doRequests(url, count)
+
+				url = getURL(helpers.K8s2Ip, data.Spec.Ports[0].NodePort)
+				doRequests(url, count)
+			}
 
 			// From pod via node IPs
 			url = getURL(helpers.K8s1Ip, data.Spec.Ports[0].NodePort)
@@ -280,7 +297,7 @@ var _ = Describe("K8sServicesTest", func() {
 		}
 
 		It("Tests NodePort (kube-proxy)", func() {
-			testNodePort(false)
+			testNodePort(false, false)
 		})
 
 		Context("with L7 policy", func() {
@@ -300,7 +317,7 @@ var _ = Describe("K8sServicesTest", func() {
 
 			It("Tests NodePort with L7 Policy", func() {
 				applyPolicy(demoPolicy)
-				testNodePort(false)
+				testNodePort(false, false)
 			})
 		})
 
@@ -337,7 +354,7 @@ var _ = Describe("K8sServicesTest", func() {
 					"--set global.nodePort.device=" + nativeDev,
 				})
 
-				testNodePort(true)
+				testNodePort(true, false)
 			})
 
 			It("Tests with direct routing", func() {
@@ -349,7 +366,21 @@ var _ = Describe("K8sServicesTest", func() {
 					"--set global.autoDirectNodeRoutes=true",
 				})
 
-				testNodePort(true)
+				testNodePort(true, false)
+			})
+
+			It("Tests with direct routing and DSR", func() {
+				deleteCiliumDS(kubectl)
+				DeployCiliumOptionsAndDNS(kubectl, []string{
+					"--set global.nodePort.enabled=true",
+					"--set global.nodePort.device=" + nativeDev,
+					"--set global.nodePort.dsr=true",
+					"--set global.tunnel=disabled",
+					"--set global.autoDirectNodeRoutes=true",
+					"--set global.ipv6.enabled=false",
+				})
+
+				testNodePort(true, true)
 			})
 		})
 
