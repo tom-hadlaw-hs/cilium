@@ -301,3 +301,6 @@ global:
 
   daemon:
     runPath: "/var/run/cilium"
+
+  # nonLocalNodeIdentity enables use of the non-local node identity
+  nonLocalNodeIdentity: true

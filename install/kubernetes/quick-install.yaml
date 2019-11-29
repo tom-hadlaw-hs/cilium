@@ -122,6 +122,7 @@ data:
   install-iptables-rules: "true"
   auto-direct-node-routes: "false"
   enable-node-port: "false"
+  enable-non-local-node-identity: "true"
 
 ---
 # Source: cilium/charts/agent/templates/serviceaccount.yaml

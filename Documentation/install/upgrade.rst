@@ -313,6 +313,30 @@ Removed options
 
 * All code associated with ``monitor v1.0`` socket handling has been removed.
 
+.. _1.7_upgrade_notes:
+
+1.7 Upgrade Notes
+-----------------
+
+New ConfigMap Options
+~~~~~~~~~~~~~~~~~~~~~
+
+  * ``enable-non-local-node-identity`` has been added to enable a new identity
+    for non-local cluster nodes. This allows to treat local and remote cluster
+    nodes differently from a policy perspective. The option is enabled by
+    default for new deployments when generated via Helm. The option is disabled
+    for existing cluster to avoid breaking compatibility in case a cluster is
+    using policy rules allowing from host which expect to allow traffic
+    from all cluster nodes.
+
+    Unless you have policy rules allowing from host which expect to allow
+    traffic from all cluster nodes instead of just the local node, it is a good
+    idea to enable this option as you upgrade as it improves the default
+    security posture of your cluster. If you have policy rules matching on host
+    with the intent of allow from all cluster nodes, it is recommended to
+    modify those policy rules to explicitly allow the entity ``non-local-node``
+    and then enable this flag as you upgrade.
+
 .. _1.6_upgrade_notes:
 
 1.6 Upgrade Notes
