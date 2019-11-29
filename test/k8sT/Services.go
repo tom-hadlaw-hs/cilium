@@ -346,6 +346,40 @@ var _ = Describe("K8sServicesTest", func() {
 
 				testNodePort(true)
 			})
+
+			Context("Tests with MetalLB", func() {
+				var (
+					metalLB string
+				)
+
+				BeforeAll(func() {
+					// Will allocate LoadBalancer IPs from 192.168.36.{240-250} range
+					metalLB = helpers.ManifestGet(kubectl.BasePath(), "metallb.yaml")
+					res := kubectl.ApplyDefault(metalLB)
+					res.ExpectSuccess("Unable to apply %s", metalLB)
+				})
+
+				AfterAll(func() {
+					_ = kubectl.Delete(metalLB)
+				})
+
+				It("Connectivity to endpoint via LB", func() {
+					lbIP, err := kubectl.GetLoadBalancerIP(
+						helpers.DefaultNamespace, "test-lb", 30*time.Second)
+					Expect(err).Should(BeNil(), "Cannot retrieve loadbalancer IP for test-lb")
+
+					doRequestsFromRemoteHost := func(url string, count int) {
+						By("Making %d HTTP requests from remote host to %q", count, url)
+						for i := 1; i <= count; i++ {
+							res := kubectl.Executor.Exec(helpers.CurlFail(url))
+							ExpectWithOffset(1, res).Should(helpers.CMDSuccess(),
+								"remote host can not connect to service %q", url)
+						}
+					}
+
+					doRequestsFromRemoteHost(lbIP, 10)
+				})
+			})
 		})
 
 	})
