@@ -64,6 +64,7 @@ cilium-agent [flags]
       --enable-l7-proxy                                       Enable L7 proxy for L7 policy enforcement (default true)
       --enable-local-node-route                               Enable installation of the route which points the allocation prefix of the local node (default true)
       --enable-node-port                                      Enable NodePort type services by Cilium (beta)
+      --enable-non-local-node-identity                        Enable use of non-local node identity
       --enable-policy string                                  Enable policy enforcement (default "default")
       --enable-tracing                                        Enable tracing while determining policy (debugging)
       --encrypt-interface string                              Transparent encryption interface

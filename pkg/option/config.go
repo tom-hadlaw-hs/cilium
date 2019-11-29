@@ -639,6 +639,9 @@ const (
 	// EnableLocalNodeRoute controls installation of the route which points
 	// the allocation prefix of the local node.
 	EnableLocalNodeRoute = "enable-local-node-route"
+
+	// EnableNonLocalNodeIdentity enables use of the non-local-node identity
+	EnableNonLocalNodeIdentity = "enable-non-local-node-identity"
 )
 
 // Default string arguments
@@ -1271,6 +1274,9 @@ type DaemonConfig struct {
 	// Enabling this option reduces waste of IP addresses but may increase
 	// the number of API calls to AWS EC2 service.
 	AwsReleaseExcessIps bool
+
+	// EnableNonLocalNodeIdentity enables use of the non-local-node identity
+	EnableNonLocalNodeIdentity bool
 }
 
 var (
@@ -1608,6 +1614,7 @@ func (c *DaemonConfig) Populate() {
 	c.DisableK8sServices = viper.GetBool(DisableK8sServices)
 	c.EgressMasqueradeInterfaces = viper.GetString(EgressMasqueradeInterfaces)
 	c.EnableHostReachableServices = viper.GetBool(EnableHostReachableServices)
+	c.EnableNonLocalNodeIdentity = viper.GetBool(EnableNonLocalNodeIdentity)
 	c.DockerEndpoint = viper.GetString(Docker)
 	c.EnableAutoDirectRouting = viper.GetBool(EnableAutoDirectRoutingName)
 	c.EnableEndpointRoutes = viper.GetBool(EnableEndpointRoutes)
